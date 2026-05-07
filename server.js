@@ -35,6 +35,19 @@ app.get('/', (req, res) => {
     res.send("Blog API running...")
 });
 
+// GET /api/posts/:id — Get a single post by ID
+app.get('/api/posts/:id', (req, res) => {
+  const posts = readPosts();
+  const id = Number(req.params.id);   // route params are strings
+  const post = posts.find((p) => p.id === id);
+
+  if (!post) {
+    return res.status(404).json({ error: 'Post not found' });
+  }
+
+  res.json(post);
+});
+
 //start server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
