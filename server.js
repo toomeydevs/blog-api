@@ -1,116 +1,120 @@
+require('dotenv').config();
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const connectDB = require('./config/db');
+const Post = require('./models/Post');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-//middleware to parse JSON request body
+// Connect to MongoDB
+connectDB();
+
+// Middleware
 app.use(express.json());
 
+// ===== ROUTES =====
 
-// Path to our JSON data file
-const postsPath = path.join(__dirname, 'data', 'posts.json');
-
-//Helper: read post from file
-function readPosts(){
-    const rawData = fs.readFileSync(postsPath, 'utf-8');
-    return JSON.parse(rawData);
-}
-
-// Helper: write posts to file
-function writePosts(posts) {
-  fs.writeFileSync(postsPath, JSON.stringify(posts, null, 2), 'utf-8');
-}
-
-// GET /api/posts — Get all posts
-app.get('/api/posts', (req, res) => {
-    const posts = readPosts();
-    res.send(posts);
-})
-
-
-//basic route for testing
-app.get('/', (req, res) => {
-    res.send("Blog API running...")
+// GET /api/posts — Get all posts (newest first)
+app.get('/api/posts', async (req, res) => {
+  try {
+    const posts = await Post.find().sort({ createdAt: -1 });
+    res.json(posts);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error while fetching posts' });
+  }
 });
 
-// GET /api/posts/:id — Get a single post by ID
-app.get('/api/posts/:id', (req, res) => {
-  const posts = readPosts();
-  const id = Number(req.params.id);   // route params are strings
-  const post = posts.find((p) => p.id === id);
-
-  if (!post) {
-    return res.status(404).json({ error: 'Post not found' });
+// GET /api/posts/:id — Get a single post
+app.get('/api/posts/:id', async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    res.json(post);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error while fetching post' });
   }
-
-  res.json(post);
 });
 
 // POST /api/posts — Create a new post
-app.post('/api/posts', (req, res) => {
-  const posts = readPosts();
-  const { title, content, author } = req.body;
+app.post('/api/posts', async (req, res) => {
+  try {
+    const { title, content, author } = req.body;
 
-  // Basic validation
-  if (!title || !content) {
-    return res.status(400).json({ error: 'Title and content are required.' });
-  }
+    // Find highest existing numeric ID
+const lastPost = await Post.findOne().sort({ id: -1 });
 
-  // Create new post
-  const newPost = {
-    id: posts.length > 0 ? posts[posts.length - 1].id + 1 : 1,
-    title,
-    content,
-    author: author || 'Anonymous',
-    createdAt: new Date().toISOString()
-  };
+// Generate next ID
+const newId = lastPost ? lastPost.id + 1 : 1;
 
-  posts.push(newPost);
-  writePosts(posts);
-
-  // 201 = Created
-  res.status(201).json(newPost);
+// Create post
+const post = new Post({
+  id: newId,
+  title,
+  content,
+  author
 });
 
-// PUT /api/posts/:id — Update an existing post
-app.put('/api/posts/:id', (req, res) => {
-  const posts = readPosts();
-  const id = Number(req.params.id);
-  const index = posts.findIndex((p) => p.id === id);
-
-  if (index === -1) {
-    return res.status(404).json({ error: 'Post not found' });
+    // Save to database (triggers validation)
+    const savedPost = await post.save();
+    res.status(201).json(savedPost);
+  } catch (error) {
+    // Handle Mongoose validation errors
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ error: messages.join('. ') });
+    }
+    res.status(500).json({ error: 'Server error while creating post' });
   }
+});
 
-  const { title, content, author } = req.body;
+// PUT /api/posts/:id — Update a post
+app.put('/api/posts/:id', async (req, res) => {
+  try {
+    const { title, content, author } = req.body;
 
-  // Update only the fields that were provided
-  if (title !== undefined) posts[index].title = title;
-  if (content !== undefined) posts[index].content = content;
-  if (author !== undefined) posts[index].author = author;
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { title, content, author },
+      { new: true, runValidators: true }
+    );
 
-  writePosts(posts);
-  res.json(posts[index]);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    res.json(post);
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ error: messages.join('. ') });
+    }
+    res.status(500).json({ error: 'Server error while updating post' });
+  }
 });
 
 // DELETE /api/posts/:id — Delete a post
-app.delete('/api/posts/:id', (req, res) => {
-  const posts = readPosts();
-  const id = Number(req.params.id);
-  const index = posts.findIndex((p) => p.id === id);
+app.delete('/api/posts/:id', async (req, res) => {
+  try {
+    const post = await Post.findByIdAndDelete(req.params.id);
 
-  if (index === -1) {
-    return res.status(404).json({ error: 'Post not found' });
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    res.json({ message: 'Post deleted', post });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error while deleting post' });
   }
-
-  const deletedPost = posts.splice(index, 1)[0];
-  writePosts(posts);
-  res.json({ message: 'Post deleted', post: deletedPost });
 });
 
-//start server
+app.delete('/api/posts', async (req, res) => {
+  await Post.deleteMany({});
+  res.json({ message: 'All posts deleted' });
+});
+
+// Start server
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-})
+  console.log(`Server running at http://localhost:${PORT}`);
+});
