@@ -1,12 +1,5 @@
 [
   {
-    "id": 1,
-    "title": "Updated Title",
-    "content": "Node.js is a JavaScript runtime built on Chrome's V8 engine. It allows you to run JavaScript on the server side.",
-    "author": "Stephen",
-    "createdAt": "2024-01-15T10:00:00Z"
-  },
-  {
     "id": 2,
     "title": "Understanding REST APIs",
     "content": "REST stands for Representational State Transfer. It's an architectural style for designing networked applications.",

@@ -95,6 +95,21 @@ app.put('/api/posts/:id', (req, res) => {
   res.json(posts[index]);
 });
 
+// DELETE /api/posts/:id — Delete a post
+app.delete('/api/posts/:id', (req, res) => {
+  const posts = readPosts();
+  const id = Number(req.params.id);
+  const index = posts.findIndex((p) => p.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Post not found' });
+  }
+
+  const deletedPost = posts.splice(index, 1)[0];
+  writePosts(posts);
+  res.json({ message: 'Post deleted', post: deletedPost });
+});
+
 //start server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
