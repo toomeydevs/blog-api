@@ -1,7 +1,7 @@
 [
   {
     "id": 1,
-    "title": "Getting Started with Node.js",
+    "title": "Updated Title",
     "content": "Node.js is a JavaScript runtime built on Chrome's V8 engine. It allows you to run JavaScript on the server side.",
     "author": "Stephen",
     "createdAt": "2024-01-15T10:00:00Z"

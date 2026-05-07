@@ -74,6 +74,27 @@ app.post('/api/posts', (req, res) => {
   res.status(201).json(newPost);
 });
 
+// PUT /api/posts/:id — Update an existing post
+app.put('/api/posts/:id', (req, res) => {
+  const posts = readPosts();
+  const id = Number(req.params.id);
+  const index = posts.findIndex((p) => p.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Post not found' });
+  }
+
+  const { title, content, author } = req.body;
+
+  // Update only the fields that were provided
+  if (title !== undefined) posts[index].title = title;
+  if (content !== undefined) posts[index].content = content;
+  if (author !== undefined) posts[index].author = author;
+
+  writePosts(posts);
+  res.json(posts[index]);
+});
+
 //start server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
