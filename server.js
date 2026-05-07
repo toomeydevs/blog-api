@@ -1,7 +1,34 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const PORT = 3000;
+
+//middleware to parse JSON request body
+app.use(express.json());
+
+
+// Path to our JSON data file
+const postsPath = path.join(__dirname, 'data', 'posts.json');
+
+//Helper: read post from file
+function readPosts(){
+    const rawData = fs.readFileSync(postsPath, 'utf-8');
+    return JSON.parse(rawData);
+}
+
+// Helper: write posts to file
+function writePosts(posts) {
+  fs.writeFileSync(postsPath, JSON.stringify(posts, null, 2), 'utf-8');
+}
+
+// GET /api/posts — Get all posts
+app.get('/api/posts', (req, res) => {
+    const posts = readPosts();
+    res.send(posts);
+})
+
 
 //basic route for testing
 app.get('/', (req, res) => {

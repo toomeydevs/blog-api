@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "title": "Getting Started with Node.js",
+    "content": "Node.js is a JavaScript runtime built on Chrome's V8 engine. It allows you to run JavaScript on the server side.",
+    "author": "Stephen",
+    "createdAt": "2024-01-15T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "title": "Understanding REST APIs",
+    "content": "REST stands for Representational State Transfer. It's an architectural style for designing networked applications.",
+    "author": "Stephen",
+    "createdAt": "2024-02-20T14:30:00Z"
+  },
+  {
+    "id": 3,
+    "title": "Why Learn the Backend",
+    "content": "Understanding the backend makes you a complete developer. You can build full applications from start to finish.",
+    "author": "Stephen",
+    "createdAt": "2024-03-10T09:15:00Z"
+  }
+]
