@@ -48,6 +48,32 @@ app.get('/api/posts/:id', (req, res) => {
   res.json(post);
 });
 
+// POST /api/posts — Create a new post
+app.post('/api/posts', (req, res) => {
+  const posts = readPosts();
+  const { title, content, author } = req.body;
+
+  // Basic validation
+  if (!title || !content) {
+    return res.status(400).json({ error: 'Title and content are required.' });
+  }
+
+  // Create new post
+  const newPost = {
+    id: posts.length > 0 ? posts[posts.length - 1].id + 1 : 1,
+    title,
+    content,
+    author: author || 'Anonymous',
+    createdAt: new Date().toISOString()
+  };
+
+  posts.push(newPost);
+  writePosts(posts);
+
+  // 201 = Created
+  res.status(201).json(newPost);
+});
+
 //start server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
